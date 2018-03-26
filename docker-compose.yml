@@ -1,7 +1,7 @@
 version: '3.3'
 
 services:
-   db:
+   ps1_db:
      image: mysql:5.7
      volumes:
        - /var/lib/mysql
@@ -11,18 +11,31 @@ services:
        MYSQL_DATABASE: ps
        MYSQL_USER: ps
        MYSQL_PASSWORD: ps
+     command: mysqld --sql_mode=""
+     ports:
+       - 3306:3306
 
-   prestashop:
+   phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      links:
+        - ps1_db:db
+      ports:
+        - 8181:80
+      environment:
+        MYSQL_USERNAME: root
+        MYSQL_ROOT_PASSWORD: admin
+
+   ps1:
      depends_on:
-       - db
-     image: prestashop/prestashop:1.7.2.4
+       - ps1_db
+     image: prestashop/prestashop:1.7.1.0
      ports:
        - "8080:80"
      restart: always
      environment:
-       PS_INSTALL_AUTO: 0
+       PS_INSTALL_AUTO: 1
        PS_ERASE_DB: 0
-       DB_SERVER: db
+       DB_SERVER: ps1_db
        DB_USER: ps
        DB_PASSWD: ps
        DB_NAME: ps
@@ -30,6 +43,8 @@ services:
        PS_DOMAIN: localhost:8080
        PS_FOLDER_ADMIN: admin123
        PS_FOLDER_INSTALL: install123
+       ADMIN_MAIL: test@prestashop.com
+       ADMIN_PASSWD: 12345678
      volumes:
        - /var/www/html
        - ./my_module:/var/www/html/modules/my_module
